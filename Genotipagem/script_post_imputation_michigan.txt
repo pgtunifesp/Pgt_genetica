@@ -1,0 +1,53 @@
+#######PARA MICHIGAN#######
+#Unzip para os arquivos baixados
+gunzip *.info.gz
+
+#Extrair os SNPs com 0.3 de imputation quality e 0.99 MAF
+for i in `seq 1 22`; do awk -F "\t" '$5>=0.01 && $7>=0.3 { print $1}' OFS="\t" chr${i}.info > chr${i}_goodimp.txt; done
+
+#para .bed
+for i in `seq 1 22`; do vcftools --gzvcf chr${i}.dose.vcf.gz --plink --chr ${i} --out chr${i}.imp;  done
+for i in `seq 1 22`; do plink --file chr${i}.imp --noweb --make-bed --extract chr${i}_goodimp.txt --out INPD_chr${i}_imp; done
+
+#arrumar .fam
+awk -F " " '{print $1,"_", $2}' OFS="" path to:INPD_updateiid.txt > INPD_updateiid1.txt
+
+awk -F " " '{print $1,"_", $2}' OFS="" path to:INPD_updateiid.txt> INPD_updateiid1.txt
+
+awk -F " " '{print $1, $2}' OFS="\t"  path to:INPD_xbim.fam  > INPD_updateiid2.txt
+
+paste INPD_updateiid1.txt INPD_updateiid1.txt INPD_updateiid2.txt > INPD_updateiid.txt
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}_imp --update-ids INPD_updateiid.txt --make-bed --out INPD_chr${i}_imp1; done
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}_imp1 --maf 0.01 --mind 0.01 --geno 0.1 --hwe 0.000001 --make-bed --out INPD_chr${i}imp_QCpass; done
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass --update-ids path to:ID_final.txt --make-bed --out INPD_chr${i}imp_QCpass_id; done
+
+awk -F " " '{print $1, $2, $5}' OFS="\t" path to:INPD_PRS_UHU.fam > INPD_updatesex.txt
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass_id --update-sex INPD_updatesex.txt --make-bed --out INPD_chr${i}imp_QCpass_idsex; done
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass_idsex --make-pheno INPD_updatesex.txt 2 --make-bed --out INPD_chr${i}_PRS; done
+
+plink --bfile INPD_chr1_PRS --merge-list patho to:lista_INPD_merge.txt --make-bed --allow-no-sex --out INPD_PRS_UHUL
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}_PRS --exclude INPD_PRS_UHUL-merge.missnp --make-bed --out INPD_chr${i}_PRS; done
+
+plink --bfile INPD_chr1_PRS --merge-list patho to:lista_INPD_merge.txt --make-bed --allow-no-sex --out INPD_PRS_UHU
+
+plink --bfile INPD_PRS_UHU --exclude remover_indels_INPD.txt --make-bed --out INPD_PRS_semindels
+
+plink --bfile INPD_PRS_semindels --remove path to:excluirVCS --make-bed --out INPD_PRS_semindels_limpo
+
+#Remover indels -> Script R (remover_indels_INPD.txt)
+plink --bfile INPD_PRS_UHU --exclude remover_indels_INPD.txt --make-bed --out INPD_PRS_semindels
+
+#Excluir do .fam quem estava com ID antigo
+plink --bfile INPD_PRS_semindels --remove path to:excluirVCS --make-bed --out INPD_PRS_semindels_limpo
+
+#Modificamos na mão os fenótipos e sexo dos indivíduos ambiguos. Dai rodamos esse comando só pra ver se não dava nenhum erro
+plink --bfile INPD_PRS_semindels_limpo --make-bed --out INPD_PRS_semindels_limpo_mano
+
+
+

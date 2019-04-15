@@ -1,0 +1,76 @@
+
+#######PARA SANGER#######
+vi filterCHR1-8
+i
+bcftools filter 1.vcf.gz -e'MAF<0.01' -Oz -o 1filter.vcf.gz
+bcftools filter 2.vcf.gz -e'MAF<0.01' -Oz -o 2filter.vcf.gz
+bcftools filter 3.vcf.gz -e'MAF<0.01' -Oz -o 3filter.vcf.gz
+bcftools filter 4.vcf.gz -e'MAF<0.01' -Oz -o 4filter.vcf.gz
+bcftools filter 5.vcf.gz -e'MAF<0.01' -Oz -o 5filter.vcf.gz
+bcftools filter 6.vcf.gz -e'MAF<0.01' -Oz -o 6filter.vcf.gz
+bcftools filter 7.vcf.gz -e'MAF<0.01' -Oz -o 7filter.vcf.gz
+bcftools filter 8.vcf.gz -e'MAF<0.01' -Oz -o 8filter.vcf.gz
+"esq"
+:x
+
+chmod 755 ./filterCHR1-8
+nohup ./filterCHR1-8 &
+
+vi filterCHR9-22
+i
+bcftools filter 9.vcf.gz -e'MAF<0.01' -Oz -o 9filter.vcf.gz
+bcftools filter 10.vcf.gz -e'MAF<0.01' -Oz -o 10filter.vcf.gz
+bcftools filter 11.vcf.gz -e'MAF<0.01' -Oz -o 11filter.vcf.gz
+bcftools filter 12.vcf.gz -e'MAF<0.01' -Oz -o 12filter.vcf.gz
+bcftools filter 13.vcf.gz -e'MAF<0.01' -Oz -o 13filter.vcf.gz
+bcftools filter 14.vcf.gz -e'MAF<0.01' -Oz -o 14filter.vcf.gz
+bcftools filter 15.vcf.gz -e'MAF<0.01' -Oz -o 15filter.vcf.gz
+bcftools filter 16.vcf.gz -e'MAF<0.01' -Oz -o 16filter.vcf.gz
+bcftools filter 17.vcf.gz -e'MAF<0.01' -Oz -o 17filter.vcf.gz
+bcftools filter 18.vcf.gz -e'MAF<0.01' -Oz -o 18filter.vcf.gz
+bcftools filter 19.vcf.gz -e'MAF<0.01' -Oz -o 19filter.vcf.gz
+bcftools filter 20.vcf.gz -e'MAF<0.01' -Oz -o 20filter.vcf.gz
+bcftools filter 21.vcf.gz -e'MAF<0.01' -Oz -o 21filter.vcf.gz
+bcftools filter 22.vcf.gz -e'MAF<0.01' -Oz -o 22filter.vcf.gz
+"esq"
+:x
+
+chmod 755 ./filterCHR9-22
+nohup ./filterCHR9-22 &
+
+#Converter para ped e map
+for i in `seq 1 22`; do vcftools --gzvcf ${i}filter.vcf.gz --plink --chr ${i} --out chr${i}.imp; done
+
+awk -F " " '{print $1,"_", $2}' OFS="" path to:INPD_xbim.fam > INPD_updateiid1.txt; 
+awk -F " " '{print $1, $2}' OFS="\t" path to:INPD_xbim.fam > INPD_updateiid2.txt; 
+paste INPD_updateiid1.txt INPD_updateiid1.txt INPD_updateiid2.txt > INPD_updateiid.txt; 
+
+for i in `seq 1 22`; do plink --file chr${i}.imp --noweb --update-ids INPD_updateiid.txt --make-bed --out INPD_chr${i}_imp1; done
+
+
+#QC
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}_imp1 --maf 0.01 --mind 0.01 --geno 0.1 --hwe 0.000001 --make-bed --out INPD_chr${i}imp_QCpass; done
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass --update-ids ID_final.txt --make-bed --out INPD_chr${i}imp_QCpass_id; done
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass_id --update-sex vcp.txt --make-bed --out INPD_chr${i}imp_QCpass_idsex; done
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass_idsex --make-pheno vcp.txt 2 --make-bed --out INPD_chr${i}imp_QCpass_final; done
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}imp_QCpass_idsex --make-pheno vcp.txt 2 --make-bed --out INPD_chr${i}_PRS; done
+
+plink --bfile INPD_chr1_PRS --merge-list path to:lista_INPD_merge.txt --make-bed --allow-no-sex --out INPD_PRS_UHUL
+
+for i in `seq 1 22`; do plink --bfile INPD_chr${i}_PRS --exclude INPD_PRS_UHUL-merge.missnp --make-bed --out INPD_chr${i}_PRS; done
+
+plink --bfile INPD_chr1_PRS --merge-list path to:lista_INPD_merge.txt --make-bed --allow-no-sex --out INPD_PRS_UHUL
+
+#Remover indels -> Script R (remover_indels_INPD.txt)
+plink --bfile INPD_PRS_UHU --exclude remover_indels_INPD.txt --make-bed --out INPD_PRS_semindels
+
+#Excluir do .fam quem estava com ID antigo
+plink --bfile INPD_PRS_semindels --remove path to:excluirVCS --make-bed --out INPD_PRS_semindels_limpo
+
+#Modificamos na mão os fenótipos e sexo dos indivíduos ambiguos. Dai rodamos esse comando só pra ver se não dava nenhum erro
+plink --bfile INPD_PRS_semindels_limpo --make-bed --out INPD_PRS_semindels_limpo_mano
+
+
+
+
+

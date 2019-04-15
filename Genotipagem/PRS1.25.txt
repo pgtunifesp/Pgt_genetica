@@ -1,0 +1,6 @@
+
+## PRS PRSice_1.25
+R --file=PRSice_v1.25.R -q --args plink plink base ~/Documents/Scores/INPD/pgc_SCZ_mano.txt target ./INPD_PRS_semindels_limpo_mano binary.target T debug.mode T covary T figname ./INPD_scoreSCZ_michigan_fe barchart.levels 0.001,0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.8 report.best.score.only F fastscore T covariates C1,C2,C3,C4,C5,C6,C7,C8,C9,C10 remove.mhc T
+
+
+

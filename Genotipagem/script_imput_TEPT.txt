@@ -1,0 +1,48 @@
+##########Imputação  TEPT 29.03.19
+
+###### 1)Alelo de Referencia
+#a-pegar arquivo .vcf do 1000genomes, extrair somente as colunas ID e REF (linha de comando); 
+zgrep -v '##' ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz > cut.vcf
+cut -f 3,4 cut.vcf | sed 's/[\t]/,/g' > cutcols.vcf #tem o SNPID e o alelo referência do 1000 genomes.
+
+#Corrigindo SNPid ## se necessario
+plink --bfile ptsd_QC_ibd --recode vcf --out ptsd_QC_ibd
+sed 's/GSA-//g' ptsd_QC_ibd.vcf > ptsd_QC_ibd_snpid.vcf
+less ptsd_QC_ibd_snpid.vcf 
+plink --vcf ptsd_QC_ibd_snpid.vcf --make-bed --out ptsd_QC_ibd_snpid
+
+#Open RStudio (script_imput.R step 1 // outcome: xbim_refPTSD.txt)
+
+
+
+###### 2)
+plink --bfile ptsd_QC_ibd_snpid --reference-allele xbim_refPTSD.txt --make-bed --out ptsd_ref
+
+###### 3) da muitos warnings. Então eu vou pegar os rs que deram warning e fazer a flipagem (open Rstudio script_imput.R step 3 // outcome: warrsPTSD.txt):
+
+
+###### 4)Flipagem com rs que deram warning
+plink --bfile ptsd_QC_ibd_snpid --flip warrsPTSD.txt --make-bed --out PTSD_flip
+
+###### 5)Alelo de referencia
+plink --bfile PTSD_flip --a2-allele xbim_refPTSD.txt --real-ref-alleles --recode-vcf --out PTSD_xbim
+
+
+############PARA SANGER#############
+vcf-sort PTSD_xbim.vcf | bgzip -c > vcfPTSD_fimSanger.vcf.gz
+bcftools norm -cx vcfPTSD_fimSanger.vcf.gz -f human_g1k_v37.fasta -o VCFPTSD_Sanger_verificado.vcf
+vcf-sort VCFPTSD_Sanger_verificado.vcf | bgzip -c > VCFPTSD_Sanger_verificado.vcf.gz
+
+
+############PARA MICHIGAN#############
+#Separar os arquivos por cromossomos (chr1-chr22)
+for i in `seq 1 22`; do plink --vcf PTSD_xbim.vcf --chr ${i} --recode-vcf --keep-allele-order --out chr${i}_PTSD; done
+
+#Create a sorted *.vcf.gz file using VCFtools and tabix (including bgzip):
+for i in `seq 1 22`; do vcf-sort chr${i}_PTSD.vcf | bgzip -c > chr${i}_PTSD_fimMichigan.vcf.gz; done
+
+
+
+
+
+
