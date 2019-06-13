@@ -1,0 +1,36 @@
+PRS for Mendelian randomization
+cd PRSice_v1.25
+module load R/3.4.1-foss-2016b 
+R --file=./PRSice_v1.25.R -q --args \
+plink /home/cmc329/scratch60/prs/PRSice_v1.25/plink_1.9_linux_160914 \
+wd /home/cmc329/scratch60/prs \
+base /home/cmc329/scratch60/prs/gp7.txt \
+target /home/cmc329/scratch60/prs/20494_both_sexes_prs_wo_duplicate_chr_bp.txt \
+size.targ 52816 \
+covary F \
+best.thresh.on.bar F \
+scatter.R2 T \
+ggfig T \
+barchart.levels 0.00000005,0.0000001,0.000001,0.00001,0.0001,0.001,0.05,0.1,0.3,0.5,1 \
+bar.col.is.pval T \
+figname GP_20494 \
+clump.ref /home/cmc329/scratch60/reference_1000p3_EUR/g1000p3_EUR \
+clump.snps T \
+clump.kb 10000 \
+clump.r2 0.001 \
+clump.p1 1 \
+clump.p2 1 \
+slower 0.00000005 \
+supper 1 \
+sinc 0.005 \
+fastscore T \
+quantiles T \
+quant.ref 1 \
+num.quantiles 5 \
+remove.mhc T \
+report.best.score.only F \
+report.individual.scores T \
+no.regression T \
+for.meta T \
+sumsum T
+

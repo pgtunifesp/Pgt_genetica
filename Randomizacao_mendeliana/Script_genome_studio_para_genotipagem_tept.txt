@@ -1,0 +1,124 @@
+Instruções para o Genome Studio software
+- No software Genome Studio escolher a opção "Genotyping", antes de começarmos a analisar os dados é importante seguir os seguintes passos:
+1) Criar uma pasta onde ficarão salvos todos os arquivos no prórpio software
+2) criar a "sample sheet" e carregá-la no software
+	- a sample "sheet" deve ter as seguintes informações:
+	-- ID do array
+	-- as amostras
+	-- gênero das amostras
+	-- nome do "manifest"
+3) na aba "Data repository" do software colocar o caminho dessa pasta que foi criada
+	- aqui colocamos todos os arquivos com a extensão .idat, em uma única pasta
+4) na aba "Manifest repository" colocar o caminho da pasta, onde se encontra o manifest repsitory (o qual foi baixado do site da Illumina usando a versão v.1)
+5) Depois de todos os arquivos e pastas terem sido criados, e todas as abas com seus respectivos arquivos, basta clicar em "Next" e escolhermos as seguintes opções:
+	- cluster SNP
+	- calculate sample and SNP statistics
+	- finish
+Após essas etapas, nós seguimos o manual criado pelo Kings College denominado "Illumina Human Exome of OmniExpress Chip processing" (No nosso caso, como só temos mulheres em nosso estudo e poucas amostras iremos seguir as etapas até o passo número 15)
+
+Illumina Human Exome & OmniExpress Chip processing
+• Below is a description of the criteria that will be used to generate genotype calls (.report) and cluster file (.egt) for Illumina Human Exome & OmniExpress Chips on the BRC Genomestudio Workstation and compute cluster.
+• All projects require user decisions based on their own data and the guidelines set out below.
+• We strongly recommend exploring all data in Genomestudio before applying any of the filters below.
+• We do not recommend blindly applying any filters or exporting data until users have had a look at their own data.
+• Genomestudio provides a wealth of data that can inform users on the general quality of their data and SNP clustering performance.
+• We have created filters for all stages below that users can apply
+• If you decide to modify any filter, please do not overwrite our pre-defined filters, but save with using the filter name plus your Initials ie FILTERNAME.flt > FILTERNAME_SJN.flt).
+• Filter extension are *.flt files will need to be placed in C:\Users\<username>\AppData\Roaming\Illumina\GenomeStudio to be visible in Genome Studio
+• Projects with < 100 samples will need to be manually edited in Genomestudio.
+• We do not recommend using any SNP calling software for < 100 samples.
+• Due to the low minor allele frequency of the ~250,000 markers on the Illumina Exome Chip, the Genome Studio clustering algorithm has limited ability to accurately detect and assign genotype calls.
+• See “GenomeStudio_GT_Module_v1.0_UG_11319113_RevA_tcm240-21464.pdf ” for detailed descriptions on using GenomeStudio.
+ 
+1. Create Project folder directories using script “make_brc_genotyping_folder_structure.sh
+2. You need to provide a “project name” and “chip type” to the script
+3. Copy iDAT data “DATA” folder to DATA folder in new project folder created on step 2
+4. Copy or download Illumina manifest and egt files to GenomeStudio_manifest_and_egt folder created in step 2
+5. Copy dMAPS data to dMAPS folder created in step 2
+6. Create GenomeStudio projects in GenomeStudio_project folder created in step 2
+7. Load data using sample sheet and IDATs.
+8. Sample sheet templates will be provided for each genotyping project.
+9. Sample Sheet format = *.cvs. Variables requested will include the following columns:
+a. Sample ID (duplicate ID's appropriately labelled as sample_id_duplicate1...)                          
+b. Sample Group (Cohort)
+c. Sample Type (DNA or WGA)
+d. Race (self-reported)
+e. Gender*
+f. Sample Plate
+g. Sample Well
+h. Chip (Sentrix) Barcode
+i. Chip (Sentrix) Position
+j. Replicate ID 
+k. Parent 1 (Father ID)
+l. Parent 2 (Mother ID)
+m. Path (Full path to data directory containing IDAT files – to be filled in by BRC Lab or BRC Bioinformatician)
+ *Without “Gender” and/or “Race”, processing of the project by BRC Bioinformaticians will not proceed, unless the user agrees on dropping the sex chromosome calling and basic quality control steps - this is ill advised for all GWAS studies.
+ *Gender must also be in the format F, M, Female or Male, with the first letter always in uppercase. Any other nomenclature will be imported as “Unknown”
+10. Clustering software used is Illumina GenomeStudio 2011.1 with the following parameters: 
+a.  Select Tools > Options > Project and uncheck “plot excluded samples”, check “Exclude Female Y-SNPs from SNP Statistics”, set “No-call Threshold” at 0.15 and click “Use for all New Projects” . Note, even though you have done this, GenomeStudio will often reset this to default, you should check these settings every time you open a project.
+11. Creating a new Genotyping project  
+a.  Select file > New Project > Genotype and follow the GenomeStudio Project Wizard
+b.  Under “Projects Repository” select GenomeStudio_project folder created in step 2
+c.  Create project as: [PROJECT_NAME]_[DATE]_01.bsc.
+d.  Select “sample sheet to load sample intensities”
+e.  Specify sample sheet location, associated data files and manifest repository
+f.  Depending on the number of samples being imported, check “Import cluster positions form a cluster file” box and specify the cluster file (.egt) location for < 100 samples. Otherwise cluster using project data (this takes longer than using the *egt, but lets the data speak for its self).
+g.  If you are not using the .egt file check “Cluster SNP’s”
+h.  Check “Calculate Sample and SNP Statistics”
+i.  Ensure Gen Call Threshold is set at 0.15 and click “Finish” to create the project
+j.  CHECK SAMPLE NUMBERS IN GENOMESTUDIO MATCH THAT IN SAMPLE SHEET !!!!.......If there is an error in the sample sheet or sample is not present at the given location, GenomeStudio will not upload the sample in question, and will NOT prompt an error.
+12. Excluding poor performing samples
+a.  Select Analysis > Exclude samples by best run > Use GC10 > Use sample ID. This will automatically exclude low quality samples by best run using p10GC
+b.  From the Samples Table arrange by “Call Rate”, highlight all samples with a call Rate of <0.90, right click and “Exclude Selected Samples”. [Data/Chip dependent ie Exome vs GWAS panel. Call rate filter may not apply to exome chips where call rates may be low because of poor rare variant clustering. This can be improved by re-clustering using the sample data, instead of the *.egt].
+c.  From the Samples Table create a Scatter Plot of Index vs. p10GC and look for outliers to determine if additional poor performing samples should be excluded. This step is strongly recommended if using WGA material. This step will also help pick out obvious batch effects.
+d.  Usually a filter of p10GC < 0.40 will identify most poor samples due to technical issues with the machine/array (Data/Chip dependent)
+e.  Tip: to improve call rates the user could re-cluster all SNPs once poor samples have been removed. Then re-calculate Sample & SNP statistics. Poor samples and outliers throw GenCall out of whack. Re clustering can generate tighter and cleaner clusters once bad samples have been removed.
+13. Filter the SNP Table so that only Y and MT chromosome loci are displayed using the filter button 
+a.  Select all displayed Y & MT chromosome SNPs
+b.  Right click the selected SNPs to launch the context menu
+c.  Select SNP Properties
+d.  Set Expected Number of Clusters to 2
+e.  This step re-clusters Y and MT SNPs:
+•   Select all displayed Y & MT chromosome SNPs
+•   Right click the selected samples to launch the context menu
+•   Select Cluster Selected SNPs
+14. Check and re-cluster X, Y, XY and MT chromosome variants. Review and visually inspect the following non-autosomal SNPs. Gender information is required for this step. If you do not have gender information, then you should manually re-cluster all X, Y, MT and XY variants, selecting only the best of the best variants. If in doubt, zero out!
+a.  Y SNPs should not cluster female samples. Select all female samples from the Samples Table and filter Chr=Y in the SNP table:
+•   Arrange SNP by descending Call Freq and look for merged male and female samples (See figure 1).
+•   Call Freq =0 look for cluster failures due to female samples (See figure 2).
+•   AB Freq !=0 Y SNPs should have no heterozygote clusters (see figure 3)
+TIP: Female samples can be excluded from the samples table, leaving only male samples. Re-cluster only Y chromosome SNPs by data. Re-introduce the Female samples. This will cluster all Y SNPs based on known male samples. Further QC will be required through the above steps on the Y chromosomes, however many SNPs would have been clustered correctly.
+b.  X SNPs should show no male subjects as heterozygotes (see figure 4).
+c.  XY SNPs - Pseudoautosomal (PAR) SNPs (present on both X and Y) may show male heterozygotes. Keep if a SNP has male heterozygotes and all female homozygotes.
+d.  Example of filtering to keep Best X chromosome variants :
+•   AB R mean >= 0.2 AND cluster sep > 0.40 AND Call Freq > 0.95
+e. Look at MT SNPs – should have no heterozygote clusters
+f. From the SNP Table select all samples, right click and “Update Selected SNP Statistics”
+g. From the Samples Table right click and “Recalculate Statistics for all Samples”
+h. From the Samples Table select all samples, right click and select Estimate Gender for selected samples. Do not populate Gender column with result of the calculation.
+i. From the Samples Table select the Column Chooser icon   and show “Gender Est” from Hidden Columns.
+15. Check and cluster X chromosome variants. Review and visually inspect the X chromosome variants.  Gender information is required for this step. These steps create a cluster file in which the X chromosome loci are clustered using only the female samples. Creating a cluster file for X chromosome variants is optional, and only really applies if you plan on adding more samples using the same chip version on the same population or cohort of samples that are being genotyped.
+a.  Select all the male samples in the Samples Tables.
+b.  Right click the selected samples to launch the context menu
+c.  Select Exclude Selected Samples
+d.  Do not update SNP statistics
+e.  Filter the SNP Table so that only X chromosome SNPs are displayed
+f.  If there are Intensity only SNP, identified by a 1 in the Intensity only column, filter out these loci
+g.  Select all displayed X chromosome SNPs
+h.  Right click the selected SNPs to launch the context menu
+i.  Select Cluster Selected SNPs
+j.  Do not update SNP statistics because males need to be reintroduced
+k.  Select all males previously excluded and select Include Selected Samples
+l.  Do not update SNP statistics
+m.  In the SNP table, select the displayed X loci
+n.  Right click and select Update Selected SNP Statistics
+o.  To properly include these changes select the calculate button in the Samples table
+16. update SNP statistics
+17. exportar os arquivos
+ 
+O software Genome Studio permite exportar o arquivo nos fomatos .ped e .map. Após a obtenção desses 2 arquivos podemos usar o plink para converter esses arquivos para .bed .bim .fam (usando o comando do plink --make-bed)
+- .ped file colunas: family ID/ individual ID/ Paternal ID/ Maternal ID/ sex/ phenotype
+- .map file colunas: chromosome/ rs/ genetic distance/ base pair position
+- .fam file colunas: family ID/ individual ID/ Paternal ID/ Maternal ID/ sex/ phenotype
+- .bim file colunas: chromosome/ rs/ genetic distance/ base pair position/ allele
+- .bed file: genotype information

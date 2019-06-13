@@ -1,0 +1,27 @@
+
+Multivariable MR
+
+# to combine the SNPs and Pvalues of exposures files in one unique file, and remove the duplicated variants (keeping the most significant p values)
+# to do a novel clumping
+# use the SNPs list from clumped file to format files to make the multivariable MR
+ 
+#R 3.5.1
+library(MendelianRandomization)
+setwd("/Path/To/Files ")
+dat<-read.table("Multi_MR.txt", header=T, sep="\t")
+MRMVInputObject<-mr_mvinput(bx = cbind(dat$exposure_1.beta,dat$exposure_2.beta), bxse = cbind(dat$exposure_1.se,dat$exposure_2.se), by = dat$outcome.beta, byse = dat$outcome.se, exposure = c("EdAtt","RiskTak"), outcome = "PTSD1.5",snps = dat$SNP)
+MRMVObject <- mr_mvivw(MRMVInputObject,model = "default",correl = FALSE,distribution = "normal",alpha = 0.05)
+MRMVObject
+
+#Example dat file for multivariable analysis
+SNP    Allele1       Allele2       outcome.beta  outcome.se    exposure_1.beta      exposure_1.se       exposure_2.beta      exposure_2.se
+rs10026644    A      G      0.0229 0.0302 -0.00086      0.00327       -8.74E-03     2.08E-03
+rs1008078     T      C      -0.0136       0.0163 -0.01738      0.00173       1.50E-03      1.09E-03
+rs10205801    A      G      0.0192 0.0161 -0.01053      0.00171       -3.50E-04     1.07E-03
+rs10460095    A      G      0.0354 0.0162 -0.01066      0.00171       3.36E-04      1.07E-03
+rs10765775    A      G      -0.0172       0.0162 0.01488       0.00176       6.17E-04      1.09E-03
+rs10772644    C      G      -0.0155       0.026  0.01614       0.00267       1.27E-03      1.72E-03
+
+
+
+

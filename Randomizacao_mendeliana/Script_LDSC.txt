@@ -1,0 +1,81 @@
+### Downloading Summary Statistics the phenotype 1
+wget https://www.dropbox.com/s/pr2cv7sglq163cy/20494.gwas.imputed_v3.both_sexes.tsv.bgz?dl=0 -O 20494.gwas.imputed_v3.both_sexes.tsv.bgz
+
+# to read the .tsv.bgz
+zless 20494.gwas.imputed_v3.both_sexes.tsv.bgz
+
+## The first few lines of the UK_biobank.both_sexes.tsv.bgz it appears like this:
+#variant minor_allele    minor_AF        low_confidence_variant  n_complete_samples      AC      ytx     beta    se      tstat   pval
+#1:15791:C:T     T       0.00000e+00     true    52816   0.00000e+00     0.00000e+00     NaN     NaN     NaN     NaN
+#Variant identifier in the form "chr:pos:ref:alt", where "ref" is aligned to the forward strand of GRCh37 and "alt" is the effect allele (use this to join with variant annotation file). Alt = A1 do GWAS
+
+### Although the .sumstats require other type of header, so I need to reformat the summary statistics. See below the example of information required for each SNP:
+#A unique identifier (e.g., the rs number) - SNP
+#Allele 1 (effect allele) - A1
+#Allele 2 (non-effect allele) - A2
+#Sample size (which often varies from SNP to SNP) - N or N_CASE or N_Control
+#A P-value - P
+#A signed summary statistic (beta, OR, log odds, Z-score, etc) - BETA
+
+### reformatting summary statistics
+R
+library(dplyr)
+library(data.table)
+base<-read.csv("20494.gwas.imputed_v3.both_sexes.tsv.bgz",header=TRUE,sep="\t")
+variants<-fread("tttt.txt",select=c(1:6))
+base<-left_join(base,variants,by = c("variant"="variant"))
+fwrite(base_adj, file="new_20494_rs.txt", sep = "\t")
+
+base<-read.csv("20494.gwas.imputed_v3.both_sexes.tsv.bgz",header=TRUE,sep="\t")
+library(tidyr) #to split column
+base_adj<-separate(data = base, col = variant, into = c("CHR", "SNP","A2","A1"), sep = ":")
+library(data.table)
+fwrite(base_adj, file="new_20494_V2.txt", sep = "\t")
+
+
+### Downloading Summary Statistics the phenotype 2
+manual download - Summary_statistics_MAGNETIC_AcAce.txt.gz 
+
+# to read the .txt.gz
+less Summary_statistics_MAGNETIC_AcAce.txt.gz
+
+# The first few lines of the Summary_statistics_MAGNETIC.txt.gz it appears like this:
+#chromosome position ID EA NEA eaf beta se p-value n_studies n_samples
+#1 13327 rs144762171 C G 0.036126 -0.008083 0.049459 0.870823 7 13315
+#EA = effect allele, NEA = non-effect allele, EAF = effect allele frequency
+
+### reformatting summary statistics
+gunzip -c Summary_statistics_MAGNETIC_AcAce.txt.gz | sed 's/EA/\A1/' > AcAce_2.txt
+sed 's/ID/\SNP/; s/NEA/\A2/; s/n_samples/\N/; s/EA/\A1/' aa.txt > bb.txt
+
+
+
+### convert summary statistics to LDSC format
+
+./munge_sumstats.py \
+--sumstats /pathtofile/filename_input \
+--merge-alleles w_hm3.snplist \            #this file is provided in the ldsc folder downloaded from github 
+--out /pathtofile/filename_output \		
+--N 				           #depends of each study, if N is provided in the summary statistic, you can remove this last command
+
+				
+# genetic correlation analysis one file
+
+./ldsc.py \
+--rg /pathtofile/PHENOTYPE1.sumstats.gz,/pathtofile/PHENOTYPE2.sumstats.gz \
+--ref-ld-chr eur_w_ld_chr/ \
+--w-ld-chr eur_w_ld_chr/ \
+--out pathtofile/filename_output
+
+# genetic correlation analysis multiple files
+for file in *.gz
+do
+./ldsc.py \
+--rg /home/fas/polimanti/cmc329/scratch60/ldsc/20495.sumstats.gz,/home/fas/polimanti/cmc329/scratch60/ldsc/$file \
+--ref-ld-chr eur_w_ld_chr/ \
+--w-ld-chr eur_w_ld_chr/ \
+--out /home/fas/polimanti/cmc329/scratch60/ldsc/cor_lds_result/PHENOTYPE1_$file
+done
+
+
+

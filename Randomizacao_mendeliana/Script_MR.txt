@@ -1,0 +1,83 @@
+
+Mendelian randomization script
+
+module load Apps/R/3.4.1-generic
+R 
+
+setwd("PathtoFiles")
+library(TwoSampleMR)
+exposure_dat <- read_exposure_data("Exposure.txt",sep ="\t")
+outcome_dat <- read_outcome_data(filename = "Outcome.txt",sep ="\t")
+dat <- harmonise_data(
+    exposure_dat = exposure_dat, 
+    outcome_dat = outcome_dat
+)
+
+sink("MR_results.txt")
+
+mr(dat)
+mr_pleiotropy_test(dat)
+mr_heterogeneity(dat)
+
+
+library(mr.raps)
+mr.raps(dat)
+mr.raps.mle.all(dat$beta.exposure, dat$beta.outcome, dat$se.exposure, dat$se.outcome)
+
+library(MRPRESSO)
+mr_presso(BetaOutcome = "beta.outcome", BetaExposure = "beta.exposure", SdOutcome = "se.outcome", SdExposure = "se.exposure", OUTLIERtest = TRUE, DISTORTIONtest = TRUE, data = dat, NbDistribution = 10000,  SignifThreshold = 0.05)
+
+##the end
+
+
+#when there is evidence of heterogeneity in the MR results
+#Leave-one-out heterogeneity
+
+setwd("/Path/To/Files")
+library(TwoSampleMR)
+exposure_dat <- read_exposure_data("EXPOSURE.txt",sep ="\t")
+outcome_dat <- read_outcome_data(filename = "OUTCOME.txt",sep ="\t")
+dat <- harmonise_data(
+    exposure_dat = exposure_dat, 
+    outcome_dat = outcome_dat
+)
+
+
+library(data.table)
+fwrite(dat, file = "dat.txt", sep="\t")
+
+library(mr.raps)
+mr.raps<- mr.raps(dat) ##this will produce a list of 6 items (beta.hat, tau2.hat, beta.se, tau2.se, t, and gamma.hat.z)
+2)	
+
+#prints just the t line from your mr.raps analysis above.these are the standardized residuals for each SNP in your dat file in the same order as the dat file
+write.table(mr.raps$t, file = "dat_residuals.txt",col.names=TRUE,row.names=FALSE,quote=FALSE,sep="\t")
+
+
+#prepare the "Res_HetLOO.txt" file where each column is one of the variants included in the genetic instruments. The order needs to be the same present in the dat file
+prepare o arquivo "Res_HetLOO.txt" onde cada coluna é uma das variantes incluídas nos instrumentos genéticos. A ordem precisa ser a mesma presente no arquivo dat
+library(data.table)
+df<-fread("list_of_snps_from_dat6.txt")
+df1<-transpose(df)
+df2<-df1[rep(1:nrow(df1),each=2),] 
+fwrite(df2, file = "Res_HetLOO.txt", sep="\t")
+
+RES_HetLoo<-read.table("Res_HetLOO.txt", header=T, sep="\t")
+for (i in 1:nrow(dat)){
+dat1<-dat[-i,]
+RES_HetLoo[,i]<-mr_heterogeneity(dat1)$Q_pval
+}
+write.table(dat,"Res_HetLoo.txt",col.names=TRUE,row.names=FALSE,quote=FALSE,sep="\t")
+#the first row is egger and the second row is ivw
+
+
+##Detect outlier with MR output
+
+##Plot the zscore-converted IVW p-value on the y axis and the mr.raps standardized residuals on the x axis. Eliminate loci from each column that fall outside the range of -1.96 to 1.96.
+
+##Use the filtered data to rerun all MR analyses.
+
+
+
+
+
